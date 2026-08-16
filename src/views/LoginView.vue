@@ -13,13 +13,16 @@ const email = ref('')
 const password = ref('')
 const error = ref('')
 const needsBootstrap = ref(false)
+const signupEnabled = ref(false)
 
 onMounted(async () => {
   try {
-    const status = await api.get<{ needsBootstrap: boolean }>('/api/auth/registration-status')
+    const status = await api.get<{ needsBootstrap: boolean; signupEnabled?: boolean }>('/api/auth/registration-status')
     needsBootstrap.value = status.needsBootstrap
+    signupEnabled.value = !!status.signupEnabled
   } catch {
     needsBootstrap.value = false
+    signupEnabled.value = false
   }
 })
 
@@ -51,8 +54,8 @@ async function submit() {
       <p v-if="error" class="auth-error"><Icon name="alert" :size="15" /> {{ error }}</p>
       <button class="auth-submit" type="submit" :disabled="auth.loading"><Icon name="shield" :size="17" /> {{ auth.loading ? 'Verificando…' : 'Entrar a FagoLab' }}</button>
     </form>
-    <p class="auth-switch">¿Te integrarás al laboratorio? <RouterLink to="/registro">Solicita una cuenta</RouterLink></p>
-    <p class="auth-help">Si olvidaste tu contraseña, solicita a la administradora que la reinicie.</p>
+    <p v-if="signupEnabled" class="auth-switch">¿Te integrarás al laboratorio? <RouterLink to="/registro">Solicita una cuenta</RouterLink></p>
+    <p class="auth-help">Si olvidaste tu contraseña, solicita a la administradora que la reinicie. Las cuentas nuevas solo las crea ella desde Seguridad.</p>
   </AuthLayout>
 </template>
 

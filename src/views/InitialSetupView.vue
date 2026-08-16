@@ -1,21 +1,34 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AuthLayout from '../components/AuthLayout.vue'
 import Icon from '../components/Icon.vue'
 import { api, ApiError } from '../api'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
+const route = useRoute()
 const router = useRouter()
 const allowed = ref(false)
+const locked = ref(false)
 const checking = ref(true)
-const form = ref({ name: '', email: '', cargo: 'Responsable del laboratorio', password: '', confirm: '' })
+const form = ref({
+  token: String(route.query.token || ''),
+  name: '',
+  email: '',
+  cargo: 'Responsable del laboratorio',
+  password: '',
+  confirm: '',
+})
 const error = ref('')
 
 onMounted(async () => {
   try {
-    allowed.value = (await api.get<{ needsBootstrap: boolean }>('/api/auth/registration-status')).needsBootstrap
+    const status = await api.get<{ needsBootstrap: boolean; bootstrapLocked?: boolean }>(
+      '/api/auth/registration-status',
+    )
+    allowed.value = status.needsBootstrap
+    locked.value = !!status.bootstrapLocked
   } finally {
     checking.value = false
   }
@@ -23,7 +36,10 @@ onMounted(async () => {
 
 async function submit() {
   error.value = ''
-  if (form.value.password !== form.value.confirm) { error.value = 'Las contraseñas no coinciden.'; return }
+  if (form.value.password !== form.value.confirm) {
+    error.value = 'Las contraseñas no coinciden.'
+    return
+  }
   try {
     await auth.bootstrap(form.value)
     await auth.login(form.value.email, form.value.password)
@@ -35,10 +51,23 @@ async function submit() {
 </script>
 
 <template>
-  <AuthLayout eyebrow="Configuración protegida" title="Crea la primera administradora" description="Esta pantalla solo funciona desde la laptop servidor y se desactiva después de crear la primera cuenta.">
+  <AuthLayout
+    eyebrow="Instalación de un solo uso"
+    title="Crea la primera administradora"
+    description="Igual que Jenkins o el instalador de Kaanbal: necesitas el token impreso en los logs de la API. Al guardar, el token se destruye y ya no se puede repetir este paso."
+  >
     <p v-if="checking" class="state"><Icon name="clock" :size="16" /> Comprobando el sistema…</p>
-    <div v-else-if="!allowed" class="closed"><Icon name="shield" :size="28" /><h3>Configuración completada</h3><p>La plataforma ya tiene una administradora.</p><RouterLink to="/login">Ir al inicio de sesión</RouterLink></div>
+    <div v-else-if="locked || !allowed" class="closed">
+      <Icon name="shield" :size="28" />
+      <h3>Instalación cerrada</h3>
+      <p>La primera cuenta ya existe y el token de inicio fue destruido. Entra con tu administradora.</p>
+      <RouterLink to="/login">Ir al inicio de sesión</RouterLink>
+    </div>
     <form v-else class="auth-fields" @submit.prevent="submit">
+      <label>
+        <span>Token de instalación</span>
+        <input v-model.trim="form.token" autocomplete="off" spellcheck="false" required placeholder="El token de los logs de fagolab-api" />
+      </label>
       <label><span>Nombre completo</span><input v-model.trim="form.name" required /></label>
       <label><span>Correo</span><input v-model.trim="form.email" type="email" required /></label>
       <label><span>Cargo</span><input v-model.trim="form.cargo" /></label>

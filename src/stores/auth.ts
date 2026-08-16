@@ -102,7 +102,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function bootstrap(payload: { name: string; email: string; password: string; cargo?: string }) {
+  async function bootstrap(payload: { token: string; name: string; email: string; password: string; cargo?: string }) {
     return api.post<{ ok: boolean; message: string }>('/api/auth/bootstrap', payload)
   }
 
