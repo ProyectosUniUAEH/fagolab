@@ -1,0 +1,18 @@
+Hero de "Acerca del proyecto" — foto real (opcional)
+=====================================================
+
+Si quieres que la portada muestre una FOTO real (peces + caja Petri en guante)
+en lugar de la ilustración SVG, coloca aquí un archivo llamado:
+
+    hero-peces.jpg
+
+(o cambia la constante `heroFotoSrc` en src/views/ProyectoView.vue si usas otro
+nombre o extensión, p.ej. /hero-peces.png).
+
+- Recomendado: imagen apaisada, ~1600×500 px, peces/caja hacia la derecha
+  (el texto del hero va sobre la izquierda, con un velo claro para legibilidad).
+- Si el archivo NO existe, la portada usa automáticamente la ilustración SVG
+  (peces, luz submarina, patrón molecular y caja Petri). No se rompe nada.
+
+Vite sirve esta carpeta `public/` en la raíz del sitio, así que el archivo queda
+disponible como /hero-peces.jpg sin configuración extra.

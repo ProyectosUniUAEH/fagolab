@@ -28,11 +28,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
+          cache: 'npm'
 
       - name: Build
         run: |
-            npm install
+            npm ci
             npm run build
 
       - name: Determine environment
@@ -82,10 +82,13 @@ jobs:
           sed -i "s/newTag.*/newTag: $IMAGE_TAG/g" kustomization.yaml
 
           git add kustomization.yaml
+          if git diff --cached --quiet; then
+            echo "Image tag already up to date; skipping infra commit"
+            exit 0
+          fi
           git commit -m "deploy($DEPLOY_ENV): fagolab to $IMAGE_TAG [skip ci]"
           cd ../../../../
 
-          # Retry push with rebase
           for i in 1 2 3 4 5; do
             git pull --rebase origin main && git push origin main && break
             echo "Push attempt $i failed, retrying in 5s..."
