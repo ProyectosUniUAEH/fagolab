@@ -272,7 +272,7 @@ const transversales = [
     <div class="card-head">
       <div class="ic ic-admin"><Icon name="database" :size="16" /></div>
       <h3>Control de datos · pruebas y backups</h3>
-      <span class="badge b-slate" style="margin-left: auto">solo entorno local</span>
+      <span class="badge b-slate" style="margin-left: auto">{{ auth.user?.isSuperadmin ? 'superadministradora' : 'requiere permisos' }}</span>
     </div>
     <div class="card-pad">
       <div class="admin-estado">

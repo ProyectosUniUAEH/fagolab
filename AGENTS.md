@@ -72,6 +72,11 @@ npm run build      # debe pasar antes de push
   - `AislamientoWizard.vue` — alta de pez + cajas (7 pasos) + subida de foto del pez.
   - `CajasView.vue` — **núcleo Excel**: observación de colonia + foto de la placa.
   - `PecesView.vue` — incluye miniatura de foto (`fotoUrl`).
+  - `SecuenciacionView.vue` + `stores/secuenciacion.ts` — etapa posterior al gel: candidatas,
+    alta con **procedencia declarada** (experimental / NCBI / sintético), carga de FASTQ/FASTA
+    con validación y QC, e identificación taxonómica por BLAST. Store propio: la carga inicial
+    de `lab.ts` no crece con cada módulo. BLAST tarda minutos, así que el store consulta la
+    corrida cada 6 s y limpia el temporizador al salir de la vista (`detenerConsulta`).
   - `ProfileView.vue` + `UserProfileCard.vue` — perfil científico, avatar/portada y
     contraseña de cualquier usuario, accesible desde la foto del encabezado.
   - `SecurityAdminView.vue` — usuarios, superadmins, roles, grupos, permisos, auditoría,

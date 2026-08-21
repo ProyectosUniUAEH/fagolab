@@ -17,6 +17,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/nanodrop', name: 'nanodrop', component: () => import('../views/NanoDropView.vue'), meta: { title: 'NanoDrop', permission: 'nanodrop.readings.view' } },
   { path: '/pcr', name: 'pcr', component: () => import('../views/PcrView.vue'), meta: { title: 'PCR', permission: 'pcr.runs.view' } },
   { path: '/electroforesis', name: 'electroforesis', component: () => import('../views/ElectroforesisView.vue'), meta: { title: 'Electroforesis', permission: 'electroforesis.gels.view' } },
+  { path: '/secuenciacion', name: 'secuenciacion', component: () => import('../views/SecuenciacionView.vue'), meta: { title: 'Secuenciación', permission: 'secuenciacion.records.view' } },
   { path: '/protocolos', name: 'protocolos', component: () => import('../views/ProtocolosView.vue'), meta: { title: 'Protocolos', permission: 'protocolos.content.view' } },
   { path: '/protocolos/categoria/:cat', name: 'protocolo-categoria', component: () => import('../views/ProtocoloCategoriaView.vue'), meta: { title: 'Protocolos', permission: 'protocolos.content.view' } },
   { path: '/protocolos/:slug', name: 'protocolo-detalle', component: () => import('../views/ProtocoloDetalleView.vue'), meta: { title: 'Protocolo', permission: 'protocolos.content.view' } },

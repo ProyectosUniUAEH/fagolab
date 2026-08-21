@@ -25,6 +25,7 @@ const groups = [
       { to: '/nanodrop', icon: 'droplet', label: 'NanoDrop', permission: 'nanodrop.readings.view' },
       { to: '/pcr', icon: 'dna', label: 'PCR', permission: 'pcr.runs.view' },
       { to: '/electroforesis', icon: 'wave', label: 'Electroforesis', permission: 'electroforesis.gels.view' },
+      { to: '/secuenciacion', icon: 'layers', label: 'Secuenciación', permission: 'secuenciacion.records.view' },
     ],
   },
   {

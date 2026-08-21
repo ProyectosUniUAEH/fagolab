@@ -224,3 +224,215 @@ export interface ReporteRow {
   ngul: number | null
   muestreo: string
 }
+
+// ---- Secuenciación -------------------------------------------------------------------
+// El flujo real del laboratorio llega hoy hasta electroforesis; de ahí en adelante el
+// dato puede venir del laboratorio, de NCBI o ser sintético. `origenDato` lo declara
+// siempre, y la UI nunca debe mostrar un dato público como si fuera experimental.
+export type OrigenDato = 'experimental' | 'publico_ncbi' | 'sintetico'
+export type SemaforoQc = 'apta' | 'revisar' | 'insuficiente'
+
+// Carril de gel con banda positiva que todavía no se envió a secuenciar.
+export interface CandidatoSecuenciacion {
+  idCarril: string
+  idGel: string
+  codigoGel: string
+  fechaGel: string
+  carril: number
+  codigoVisible: string
+  tamanoPb: number | null
+  idPcr: string | null
+  codigoPcr: string
+  idVial: string | null
+  codigoVial: string
+  pez: string
+  organo: string
+  lote: string
+}
+
+// FASTQ = lecturas crudas (secuencia + calidad). FASTA = secuencia procesada.
+export interface ArchivoSecuencia {
+  id: string
+  formato: 'fasta' | 'fastq'
+  rol: 'R1' | 'R2' | 'consenso' | 'contigs' | 'referencia' | 'otro'
+  nombreArchivo: string
+  storageUri: string
+  comprimido: boolean
+  sizeBytes: number | null
+  sha256: string | null
+  estadoValidacion: 'pendiente' | 'valido' | 'invalido'
+  semaforo: SemaforoQc | null
+  metricas: Record<string, number | string | boolean | string[]>
+  hallazgos: string[]
+  origenDato: OrigenDato
+  subidoPor: string
+  creadoEn: string
+}
+
+export interface Secuenciacion {
+  id: string
+  codigo: string // SEQ-001 | SEQ-PUB-001 | SEQ-DEMO-001
+  origenDato: OrigenDato
+  origenEtiqueta: string
+  fuenteExterna: string
+  accession: string
+  organismoDeclarado: string
+  plataforma: string
+  tecnologia: string
+  tipoSecuenciacion: string
+  layout: string
+  laboratorio: string
+  proveedor: string
+  fechaSecuenciacion: string | null
+  fechaEnvio: string | null
+  estado: 'pendiente' | 'enviada' | 'secuenciada' | 'analizada' | 'fallida'
+  notasProcedencia: string
+  observaciones: string
+  idGel: string | null
+  idCarril: string | null
+  idPcr: string | null
+  idVial: string | null
+  codigoGel: string
+  carril: number | null
+  codigoVial: string
+  pez: string
+  organo: string
+  archivos: ArchivoSecuencia[]
+}
+
+// ---- Análisis automatizado (BLAST + taxonomía) ---------------------------------------
+// Una coincidencia de BLAST es un hecho medido: no la produce el modelo, y por eso se
+// guarda con su identidad, cobertura y e-value tal como los devolvió NCBI.
+export interface HitBlast {
+  ranking: number
+  accession: string
+  organismo: string
+  taxId: string
+  identidadPct: number | null
+  coberturaPct: number | null
+  eValue: number | null
+  bitScore: number | null
+  longitudAlineamientoPb: number | null
+  baseDatos: string
+  fechaCorrida: string
+}
+
+export interface NodoLinaje {
+  rango: string
+  nombre: string
+}
+
+// BLAST tarda minutos: la corrida es un objeto con estado que la interfaz consulta.
+export interface CorridaAnalisis {
+  id: string
+  tipo: string
+  herramienta: string
+  idSecuenciacion: string
+  idArchivo: string | null
+  estado: 'registrada' | 'en_curso' | 'completada' | 'fallida' | 'cancelada'
+  progreso: string
+  referenciaExterna: string
+  parametros: Record<string, string | number>
+  resultado: {
+    rid?: string
+    baseDatos?: string
+    consulta?: string
+    totalHits?: number
+    mensaje?: string
+    taxonomia?: { nombreCientifico: string; rango: string; linaje: NodoLinaje[] } | null
+  }
+  error: string | null
+  ejecutadaPor: string
+  creadaEn: string
+  finalizadaEn: string | null
+  pasos?: PasoOrquestacion[]
+  bitacora?: BitacoraOrquestacion[]
+}
+
+export interface PasoOrquestacion {
+  clave: string
+  etiqueta: string
+  titulo: string
+  naturaleza: 'det' | 'ext' | 'gen'
+  estado: 'pendiente' | 'en_curso' | 'completado' | 'fallido'
+  detalle: string
+  duracionMs: number | null
+  datos: Record<string, unknown>
+}
+
+export interface BitacoraOrquestacion {
+  hora: string
+  naturaleza: 'det' | 'ext' | 'gen'
+  titulo: string
+  detalle: string
+  duracionMs: number | null
+}
+
+// Contrato público de una herramienta del catálogo.
+export interface FirmaTool {
+  nombre: string
+  descripcion: string
+  devuelve: string
+  permiso: string
+  plano: 'proceso' | 'job' | 'gpu'
+  red: boolean
+}
+
+// ---- Ficha científica (única salida generada por el modelo) ---------------------------
+// Se guarda con sus parámetros y el hash de la evidencia: sin eso una ficha no es
+// reproducible ni comparable, y no se puede auditar en qué se apoyó.
+export interface FichaAnalisis {
+  id: string
+  idSecuenciacion: string
+  texto: string
+  secciones: Record<string, string>
+  proveedor: string
+  modelo: string
+  temperatura: number | null
+  topP: number | null
+  seed: number | null
+  conEvidencia: boolean
+  evidenciaSha256: string | null
+  evidenciaResumen: {
+    hits?: number
+    articulos?: number
+    accessions?: string[]
+    pmids?: string[]
+    consultas?: string[]
+    conQc?: boolean
+    control?: string
+  }
+  tokensEntrada: number | null
+  tokensSalida: number | null
+  duracionMs: number | null
+  etiquetaExperimento: string
+  generadaPor: string
+  creadaEn: string
+}
+
+// ---- Árbol filogenético (orientativo) ------------------------------------------------
+// Nodo anidado del árbol. `rama` es la longitud de rama hacia el padre.
+export interface NodoArbol {
+  nombre: string
+  hoja: boolean
+  rama?: number
+  hijos: NodoArbol[]
+}
+
+export interface ResultadoArbol {
+  etiquetaConsulta: string
+  referencias: { accession: string; organismo: string; longitudPb: number }[]
+  metodo: string
+  arbol: NodoArbol
+  newick: string
+  matriz: { nombres: string[]; valores: number[][] }
+  limitacion: string
+}
+
+// ---- Experimento: una variable a la vez ----------------------------------------------
+export interface VariableExperimento {
+  clave: string
+  etiqueta: string
+  explicacion: string
+  valoresSugeridos: (number | boolean)[]
+}
